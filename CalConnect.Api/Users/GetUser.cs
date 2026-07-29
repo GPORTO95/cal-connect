@@ -5,7 +5,7 @@ namespace CalConnect.Api.Users;
 
 internal sealed class GetUser(AppDbContext context)
 {
-    public sealed record UserResponse(Guid Id, string FirstName, string LastName, string Email, bool EmailVerified);
+    internal sealed record UserResponse(Guid Id, string FirstName, string LastName, string Email, bool EmailVerified);
 
     public async Task<UserResponse?> Handle(Guid userId)
     {

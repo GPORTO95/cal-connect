@@ -12,7 +12,7 @@ internal sealed class RegisterUser(
     IFluentEmail fluentEmail,
     EmailVerificationLinkFactory emailVerificationLinkFactory)
 {
-    public sealed record Request(string Email, string FirstName, string LastName, string Password);
+    internal sealed record Request(string Email, string FirstName, string LastName, string Password);
 
     public async Task<User> Handle(Request request)
     {

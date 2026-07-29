@@ -1,6 +1,7 @@
 using System.Text;
 using CalConnect.Api.Database;
 using CalConnect.Api.Extensions;
+using CalConnect.Api.OutputCaching;
 using CalConnect.Api.Users;
 using CalConnect.Api.Users.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -44,6 +45,20 @@ builder.Services.AddScoped<LoginUser>();
 builder.Services.AddScoped<VerifyEmail>();
 builder.Services.AddScoped<GetUser>();
 
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(b => b.AddPolicy<CustomPolicy>().SetCacheKeyPrefix("custom-"), true);
+
+    options.AddBasePolicy(b => b.Tag("all"), true);
+});
+
+builder.Services.AddStackExchangeRedisOutputCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+
+    options.InstanceName = "cal-connect-";
+});
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -59,5 +74,7 @@ UserEndpoints.Map(app);
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseOutputCache();
 
 app.Run();
