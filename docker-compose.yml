@@ -1,0 +1,31 @@
+services:
+  calconnect.api:
+    image: ${DOCKER_REGISTRY-}calconnectapi
+    container_name: CalConnect.Api
+    build:
+      context: .
+      dockerfile: CalConnect.Api/Dockerfile
+    depends_on:
+      - calconnect.postgres
+    ports:
+      - 5000:8080
+      - 5001:8081
+
+  calconnect.postgres:
+    image: postgres:latest
+    container_name: CalConnect.PostgreSql
+    environment:
+      - POSTGRES_DB=calconnect
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./.containers/db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  calconnect.papercut:
+    image: changemakerstudiosus/papercut-smtp:latest
+    container_name: CalConnect.Papercut
+    ports:
+      - 8080:80
+      - 25:25
