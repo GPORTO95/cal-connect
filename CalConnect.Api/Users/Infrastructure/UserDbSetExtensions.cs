@@ -13,9 +13,4 @@ internal static class UserDbSetExtensions
     {
         return await users.SingleOrDefaultAsync(u => u.Email == email);
     }
-
-    public static async Task<User?> GetById(this DbSet<User> users, Guid id)
-    {
-        return await users.SingleOrDefaultAsync(u => u.Id == id);
-    }
 }

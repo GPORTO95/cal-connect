@@ -1,7 +1,7 @@
 using System.Text;
 using CalConnect.Api.Database;
+using CalConnect.Api.Endpoints;
 using CalConnect.Api.Extensions;
-using CalConnect.Api.OutputCaching;
 using CalConnect.Api.Users;
 using CalConnect.Api.Users.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -44,20 +44,21 @@ builder.Services.AddScoped<RegisterUser>();
 builder.Services.AddScoped<LoginUser>();
 builder.Services.AddScoped<VerifyEmail>();
 builder.Services.AddScoped<GetUser>();
+builder.Services.AddScoped<UpdateUser>();
 
-builder.Services.AddOutputCache(options =>
-{
-    options.AddBasePolicy(b => b.AddPolicy<CustomPolicy>().SetCacheKeyPrefix("custom-"), true);
+//builder.Services.AddScoped<CreateMeeting>();
+//builder.Services.AddScoped<UpdateMeeting>();
+//builder.Services.AddScoped<CancelMeeting>();
+//builder.Services.AddScoped<RescheduleMeeting>();
+//builder.Services.AddScoped<InviteParticipant>();
+//builder.Services.AddScoped<RemoveParticipant>();
+//builder.Services.AddScoped<UpdateParticipantResponse>();
 
-    options.AddBasePolicy(b => b.Tag("all"), true);
-});
+//builder.Services.AddScoped<MeetingPolicyService>();
+//builder.Services.AddScoped<IEmailService, EmailService>();
+//builder.Services.AddScoped<ICalendarSyncService, CalendarSyncService>();
 
-builder.Services.AddStackExchangeRedisOutputCache(options =>
-{
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-
-    options.InstanceName = "cal-connect-";
-});
+builder.Services.AddEndpoints();
 
 WebApplication app = builder.Build();
 
@@ -69,12 +70,10 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigrations();
 }
 
-UserEndpoints.Map(app);
+app.MapEndpoints();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
-
-app.UseOutputCache();
 
 app.Run();

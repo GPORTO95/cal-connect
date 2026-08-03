@@ -1,4 +1,5 @@
 ﻿using CalConnect.Api.Database;
+using CalConnect.Api.Endpoints;
 using CalConnect.Api.Users.Infrastructure;
 using FluentEmail.Core;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ internal sealed class RegisterUser(
     IFluentEmail fluentEmail,
     EmailVerificationLinkFactory emailVerificationLinkFactory)
 {
-    internal sealed record Request(string Email, string FirstName, string LastName, string Password);
+    public sealed record Request(string Email, string FirstName, string LastName, string Password);
 
     public async Task<User> Handle(Request request)
     {
@@ -53,7 +54,6 @@ internal sealed class RegisterUser(
             throw new Exception("The email is already in use", e);
         }
 
-        // Email verification?
         string verificationLink = emailVerificationLinkFactory.Create(verificationToken);
 
         await fluentEmail
@@ -63,5 +63,15 @@ internal sealed class RegisterUser(
             .SendAsync();
 
         return user;
+    }
+
+    internal sealed class Endpoint : IEndpoint
+    {
+        public void MapEndpoint(IEndpointRouteBuilder app)
+        {
+            app.MapPost("users/register", async (Request request, RegisterUser useCase) =>
+                await useCase.Handle(request))
+                .WithTags(UserEndpoints.Tag);
+        }
     }
 }

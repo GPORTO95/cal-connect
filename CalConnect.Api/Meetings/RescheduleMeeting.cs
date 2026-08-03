@@ -1,24 +1,22 @@
 using CalConnect.Api.Database;
 using CalConnect.Api.Endpoints;
 
-namespace CalConnect.Api.Users;
+namespace CalConnect.Api.Meetings;
 
-internal sealed class UpdateUser(AppDbContext context)
+internal sealed class RescheduleMeeting(AppDbContext context)
 {
-    public sealed record Request(Guid Id, string FirstName, string LastName, string Email);
+    internal sealed record Request(Guid Id, DateTime NewStartTime);
 
     public async Task<bool> Handle(Request request)
     {
-        User? user = await context.Users.FindAsync(request.Id);
+        Meeting? meeting = await context.Meetings.FindAsync(request.Id);
 
-        if (user is null)
+        if (meeting is null)
         {
             return false;
         }
 
-        user.FirstName = request.FirstName;
-        user.LastName = request.LastName;
-        user.Email = request.Email;
+        meeting.StartTime = request.NewStartTime;
 
         await context.SaveChangesAsync();
 
@@ -29,7 +27,7 @@ internal sealed class UpdateUser(AppDbContext context)
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("users/{id:guid}", async (Guid id, Request request, UpdateUser useCase) =>
+            app.MapPatch("meetings/{id:guid}/reschedule", async (Guid id, Request request, RescheduleMeeting useCase) =>
             {
                 if (id != request.Id)
                 {
@@ -37,10 +35,9 @@ internal sealed class UpdateUser(AppDbContext context)
                 }
 
                 bool success = await useCase.Handle(request);
-
                 return success ? Results.NoContent() : Results.NotFound();
             })
-            .WithTags(UserEndpoints.Tag)
+            .WithTags(MeetingEndpoints.Tag)
             .RequireAuthorization();
         }
     }
