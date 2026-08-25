@@ -7,6 +7,9 @@ services:
       dockerfile: CalConnect.Api/Dockerfile
     depends_on:
       - calconnect.postgres
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://calconnect.seq:5341/ingest/otlp
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
     ports:
       - 5000:8080
       - 5001:8081
@@ -29,3 +32,14 @@ services:
     ports:
       - 8080:80
       - 25:25
+
+  calconnect.seq:
+    image: datalust/seq:latest
+    container_name: CalConnect.Seq
+    volumes:
+      - ./.containers/seq:/data
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - 5341:5341
+      - 8081:80

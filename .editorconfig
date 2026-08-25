@@ -69,6 +69,9 @@ csharp_style_expression_bodied_accessors = true:error
 csharp_style_expression_bodied_lambdas = true:error
 csharp_style_expression_bodied_local_functions = true:error
 
+# S2325: Methods and properties that don't access instance data should be static
+dotnet_diagnostic.S2325.severity = none
+
 [*.{cs,vb}]
 dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
 dotnet_style_prefer_simplified_interpolation = true:suggestion

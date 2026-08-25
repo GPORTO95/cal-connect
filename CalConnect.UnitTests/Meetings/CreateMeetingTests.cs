@@ -5,6 +5,7 @@ using CalConnect.Api.Users;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
+using ApplicationException = CalConnect.Api.Exceptions.ApplicationException;
 
 namespace CalConnect.UnitTests.Meetings;
 
@@ -90,7 +91,7 @@ public class CreateMeetingTests : IDisposable
         Func<Task> act = async () => await _createMeeting.Handle(request);
 
         // Assert
-        await act.Should().ThrowAsync<CalConnect.Api.Exceptions.ApplicationException>().WithMessage("Organizer not found.");
+        await act.Should().ThrowAsync<ApplicationException>().WithMessage("Organizer not found.");
     }
 
     [Fact]
@@ -157,7 +158,7 @@ public class CreateMeetingTests : IDisposable
         Func<Task> act = async () => await _createMeeting.Handle(request);
 
         // Assert
-        await act.Should().ThrowAsync<CalConnect.Api.Exceptions.ApplicationException>()
+        await act.Should().ThrowAsync<ApplicationException>()
             .WithMessage("The organizer has a time conflict with another meeting.");
     }
 
@@ -185,7 +186,7 @@ public class CreateMeetingTests : IDisposable
         Func<Task> act = async () => await _createMeeting.Handle(request);
 
         // Assert
-        await act.Should().ThrowAsync<CalConnect.Api.Exceptions.ApplicationException>()
+        await act.Should().ThrowAsync<ApplicationException>()
             .WithMessage($"Participant with ID {request.Participants[0].UserId} not found.");
     }
 
@@ -226,7 +227,7 @@ public class CreateMeetingTests : IDisposable
         Func<Task> act = async () => await _createMeeting.Handle(request);
 
         // Assert
-        await act.Should().ThrowAsync<CalConnect.Api.Exceptions.ApplicationException>()
+        await act.Should().ThrowAsync<ApplicationException>()
             .WithMessage($"Participant {participant.Id} has a time conflict.");
     }
 

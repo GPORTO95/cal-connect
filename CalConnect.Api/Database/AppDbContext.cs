@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CalConnect.Api.Database;
 
-internal class AppDbContext : DbContext
+public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -13,6 +13,8 @@ internal class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
 
     public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     public DbSet<Meeting> Meetings { get; set; }
 

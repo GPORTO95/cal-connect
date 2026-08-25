@@ -1,6 +1,6 @@
 ﻿namespace CalConnect.Api.Endpoints;
 
-internal interface IEndpoint
+public interface IEndpoint
 {
     void MapEndpoint(IEndpointRouteBuilder app);
 }

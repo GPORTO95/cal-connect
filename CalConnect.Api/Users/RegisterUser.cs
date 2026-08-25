@@ -4,6 +4,7 @@ using CalConnect.Api.Users.Infrastructure;
 using FluentEmail.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using ApplicationException = CalConnect.Api.Exceptions.ApplicationException;
 
 namespace CalConnect.Api.Users;
 
@@ -19,7 +20,7 @@ internal sealed class RegisterUser(
     {
         if (await context.Users.Exists(request.Email))
         {
-            throw new Exception("The email is already in use");
+            throw new ApplicationException("The email is already in use");
         }
 
         var user = new User

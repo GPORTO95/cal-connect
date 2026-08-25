@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace CalConnect.Api.Endpoints;
 
-internal static class EndpointExtensions
+public static class EndpointExtensions
 {
     public static IServiceCollection AddEndpoints(this IServiceCollection services)
     {
