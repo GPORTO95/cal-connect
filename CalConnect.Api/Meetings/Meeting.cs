@@ -8,7 +8,7 @@ public class Meeting
     private readonly List<AgendaItem> _agendaItems = [];
 
     internal Meeting() { }
-    
+
     public Guid Id { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
@@ -17,8 +17,8 @@ public class Meeting
     public TimeSpan Duration { get; set; }
     public string Location { get; set; }
     public MeetingType Type { get; set; }
-    public IReadOnlyCollection<AgendaItem> AgendaItems => _agendaItems.ToList();
-    public IReadOnlyCollection<Participant> Participants => _participants.ToList();
+    public IReadOnlyCollection<AgendaItem> AgendaItems => [.. _agendaItems.ToList()];
+    public IReadOnlyCollection<Participant> Participants => [.. _participants.ToList()];
 
     public static Meeting Create(
         string title,

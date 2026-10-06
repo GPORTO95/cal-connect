@@ -5,6 +5,7 @@ using CalConnect.Api.Endpoints;
 using CalConnect.Api.Exceptions;
 using CalConnect.Api.Extensions;
 using CalConnect.Api.Meetings;
+using CalConnect.Api.Roles;
 using CalConnect.Api.Users;
 using CalConnect.Api.Users.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,6 +16,7 @@ using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Quartz;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -23,9 +25,9 @@ builder.Services.AddProblemDetails(o =>
     o.CustomizeProblemDetails = context =>
     {
         context.ProblemDetails.Instance = $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
-        context.ProblemDetails.Extensions.Add("requestId", context.HttpContext.TraceIdentifier);
+        context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
         Activity? activity = context.HttpContext.Features.Get<IHttpActivityFeature>()?.Activity;
-        context.ProblemDetails.Extensions.Add("traceId", activity?.Id);
+        context.ProblemDetails.Extensions.TryAdd("traceId", activity?.Id);
     };
 });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -33,11 +35,14 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGenWithAuth();
 
+string connectionString = builder.Configuration.GetConnectionString("Database")!;
 builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("Database")).UseSnakeCaseNamingConvention());
+{
+    o.UseNpgsql(connectionString).UseSnakeCaseNamingConvention();
+});
 
 builder.Services.AddSingleton<PasswordHasher>();
-builder.Services.AddSingleton<TokenProvider>();
+builder.Services.AddScoped<TokenProvider>();
 builder.Services.AddScoped<EmailVerificationLinkFactory>();
 
 builder.Services.AddHttpContextAccessor();
@@ -70,6 +75,10 @@ builder.Services.AddScoped<VerifyEmail>();
 builder.Services.AddScoped<GetUser>();
 builder.Services.AddScoped<UpdateUser>();
 
+builder.Services.AddScoped<GetRoles>();
+builder.Services.AddScoped<CreateRole>();
+builder.Services.AddScoped<UpdateRole>();
+
 builder.Services.AddScoped<CreateMeeting>();
 builder.Services.AddScoped<UpdateMeeting>();
 builder.Services.AddScoped<CancelMeeting>();
@@ -97,9 +106,19 @@ builder.Services.AddOpenTelemetry()
         tracing
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation()
-            .AddNpgsql();
+            .AddNpgsql()
+            .AddQuartzInstrumentation();
     })
     .UseOtlpExporter();
+
+builder.Services.AddQuartz(options =>
+{
+    options.AddJob<SendVerificationEmailJob>(c => c
+        .StoreDurably()
+        .WithIdentity(SendVerificationEmailJob.Name));
+});
+
+builder.Services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
 
 WebApplication app = builder.Build();
 

@@ -1,9 +1,10 @@
 ﻿using CalConnect.Api.Database;
 using CalConnect.Api.Endpoints;
+using CalConnect.Api.Roles.Domain;
 using CalConnect.Api.Users.Infrastructure;
-using FluentEmail.Core;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Quartz;
 using ApplicationException = CalConnect.Api.Exceptions.ApplicationException;
 
 namespace CalConnect.Api.Users;
@@ -11,7 +12,7 @@ namespace CalConnect.Api.Users;
 internal sealed class RegisterUser(
     AppDbContext context,
     PasswordHasher passwordHasher,
-    IFluentEmail fluentEmail,
+    ISchedulerFactory schedulerFactory,
     EmailVerificationLinkFactory emailVerificationLinkFactory)
 {
     public sealed record Request(string Email, string FirstName, string LastName, string Password);
@@ -31,8 +32,14 @@ internal sealed class RegisterUser(
             LastName = request.LastName,
             PasswordHash = passwordHasher.Hash(request.Password)
         };
-
         context.Users.Add(user);
+
+        var userRole = new UserRole
+        {
+            UserId = user.Id,
+            RoleId = Role.MemberId
+        };
+        context.UserRoles.Add(userRole);
 
         DateTime utcNow = DateTime.UtcNow;
         var verificationToken = new EmailVerificationToken
@@ -57,11 +64,22 @@ internal sealed class RegisterUser(
 
         string verificationLink = emailVerificationLinkFactory.Create(verificationToken);
 
-        await fluentEmail
-            .To(user.Email)
-            .Subject("Email verification for CalConnect")
-            .Body($"To verify your email address <a href='{verificationLink}'>click here</a>", isHtml: true)
-            .SendAsync();
+        IScheduler scheduler = await schedulerFactory.GetScheduler();
+
+        var jobData = new JobDataMap
+        {
+            { "Email", user.Email },
+            { "VerificationLink", verificationLink }
+        };
+
+        ITrigger trigger = TriggerBuilder.Create()
+            .ForJob(SendVerificationEmailJob.Name)
+            .WithIdentity($"trigger-send-verification-email-{user.Id}")
+            .UsingJobData(jobData)
+            .StartNow()
+            .Build();
+
+        await scheduler.ScheduleJob(trigger);
 
         return user;
     }
